@@ -1,0 +1,44 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://x.com/kuronami333"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+description='''${mod_description}'''
+authors="${mod_authors}"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/ars-warp-to-map"
+
+[[dependencies.${mod_id}]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+# Ars Nouveau: 巻物データの供給源。任意（不在では静かに何もしない＝Inner class isolation）。
+# versionRange は Ars の版が複合文字列（例 4.12.7-1.20.1）のため下限を緩く取る。
+[[dependencies.${mod_id}]]
+    modId="ars_nouveau"
+    mandatory=false
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="CLIENT"
+
+# JourneyMap: 任意。不在では静かに何もしない（Inner class isolation）。
+# JM 自体がクライアント専用 MOD なので宣言も CLIENT に限定。
+[[dependencies.${mod_id}]]
+    modId="journeymap"
+    mandatory=false
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="CLIENT"
