@@ -99,12 +99,17 @@ public final class JourneyMapBridge {
             List<PointSnapshot> ordered = desired.values().stream()
                     .sorted(Comparator.comparing(PointSnapshot::id))
                     .toList();
+            int created = 0;
             for (PointSnapshot snapshot : ordered) {
                 Waypoint wp = createWaypoint(snapshot);
+                if (wp == null) {
+                    continue;
+                }
                 LIVE.put(snapshot.id(), wp);
                 api.addWaypoint(ArsWarpToMap.MODID, wp);
+                created++;
             }
-            ArsWarpToMap.LOGGER.info("Rebuilt {} Ars warp waypoint(s) on JourneyMap", ordered.size());
+            ArsWarpToMap.LOGGER.info("Rebuilt {} Ars warp waypoint(s) on JourneyMap", created);
             return true;
         }
 
@@ -125,20 +130,29 @@ public final class JourneyMapBridge {
 
             for (PointSnapshot snapshot : plan.upserts()) {
                 UUID id = snapshot.id();
+                Waypoint wp = createWaypoint(snapshot);
+                if (wp == null) {
+                    continue; // 次元が壊れた巻物。既存の実体は消さずそのまま残す
+                }
                 Waypoint previous = LIVE.remove(id);
                 if (previous != null) {
                     api.removeWaypoint(ArsWarpToMap.MODID, previous);
                 }
-                Waypoint wp = createWaypoint(snapshot);
                 LIVE.put(id, wp);
                 api.addWaypoint(ArsWarpToMap.MODID, wp);
             }
             return true;
         }
 
+        /** 行き先の次元が ResourceLocation として解釈できない巻物は null を返す（この 1 件だけ捨てる）。 */
         static Waypoint createWaypoint(PointSnapshot s) {
-            ResourceKey<Level> dimension = ResourceKey.create(
-                    Registries.DIMENSION, ResourceLocation.parse(s.dimensionId()));
+            // 1.20.1 の srg jar には ResourceLocation.parse が無い版がある（tryParse は全版にある）
+            ResourceLocation location = ResourceLocation.tryParse(s.dimensionId());
+            if (location == null) {
+                ArsWarpToMap.LOGGER.debug("Skipping waypoint with unreadable dimension: {}", s.dimensionId());
+                return null;
+            }
+            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, location);
             // 永続 waypoint。行き先キーを追跡し、名前・座標・次元・色をそのまま反映する。
             Waypoint wp = WaypointFactory.createClientWaypoint(
                     ArsWarpToMap.MODID,
